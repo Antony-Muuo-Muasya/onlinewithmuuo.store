@@ -7,6 +7,24 @@
 
 :root {
   color-scheme: dark;
+  --accent-color: 16, 185, 129; /* emerald-500 */
+}
+
+/* Theme overrides */
+body.theme-cyber-emerald {
+  --accent-color: 16, 185, 129; /* emerald-500 */
+}
+
+body.theme-cyber-purple {
+  --accent-color: 139, 92, 246; /* violet-500 */
+}
+
+body.theme-crimson-rose {
+  --accent-color: 244, 63, 94; /* rose-500 */
+}
+
+body.theme-amber-gold {
+  --accent-color: 245, 158, 11; /* amber-500 */
 }
 
 body {
@@ -14,7 +32,7 @@ body {
   background-color: #030712; /* slate-950 */
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: #1e293b #030712;
+  scrollbar-color: rgba(var(--accent-color), 0.3) #030712;
 }
 
 /* Custom Scrollbars */
@@ -28,12 +46,25 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: rgba(var(--accent-color), 0.15);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #10b981; /* emerald-500 */
+  background: rgb(var(--accent-color));
+}
+
+/* Dynamic Accent Styles */
+.text-theme-accent {
+  color: rgb(var(--accent-color));
+}
+
+.bg-theme-accent {
+  background-color: rgb(var(--accent-color));
+}
+
+.border-theme-accent {
+  border-color: rgba(var(--accent-color), 0.2);
 }
 
 /* Custom Glassmorphism Card Style */
@@ -49,8 +80,8 @@ body {
 
 .glass-panel-hover:hover {
   background: rgba(15, 23, 42, 0.6);
-  border-color: rgba(16, 185, 129, 0.2); /* emerald-500 */
-  box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.15);
+  border-color: rgba(var(--accent-color), 0.3);
+  box-shadow: 0 10px 30px -10px rgba(var(--accent-color), 0.25);
 }
 
 /* Book Cover Depth Effect */

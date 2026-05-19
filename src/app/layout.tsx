@@ -5,6 +5,7 @@ import { StoreProvider } from "@/context/store-context";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { CheckoutOverlay } from "@/components/checkout-overlay";
+import { InteractiveCanvas } from "@/components/interactive-canvas";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,6 +50,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-200">
         <StoreProvider>
           <Navbar />
+          <InteractiveCanvas />
           <main className="flex-1 flex flex-col pt-16">{children}</main>
           <Footer />
           <CheckoutOverlay />

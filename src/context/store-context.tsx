@@ -4,6 +4,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { Product, products as initialProducts } from "@/data/products";
 import { supabase, isSupabaseConfigured, mapDbProductToModel, mapModelToDbProduct } from "@/lib/supabase";
 
+export type StoreTheme = "cyber-emerald" | "cyber-purple" | "crimson-rose" | "amber-gold";
+export type StoreCurrency = "USD" | "KES" | "EUR" | "GBP";
+
 interface StoreContextType {
   cart: Product[];
   addToCart: (product: Product) => void;
@@ -20,6 +23,14 @@ interface StoreContextType {
   products: Product[];
   uploadProduct: (product: Product) => void;
   deleteProduct: (productId: string) => void;
+  // New Global State Features
+  theme: StoreTheme;
+  setTheme: (theme: StoreTheme) => void;
+  currency: StoreCurrency;
+  setCurrency: (currency: StoreCurrency) => void;
+  convertPrice: (usdPrice: number) => string;
+  promoDiscountApplied: boolean;
+  applyPromoDiscount: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -30,6 +41,39 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [isOpenCheckout, setIsOpenCheckout] = useState(false);
   const [activeProductForCheckout, setActiveProductForCheckout] = useState<Product | null>(null);
   const [checkoutStep, setCheckoutStep] = useState<"idle" | "processing" | "success">("idle");
+  
+  // 10 Cool Features: State
+  const [theme, setThemeState] = useState<StoreTheme>("cyber-emerald");
+  const [currency, setCurrency] = useState<StoreCurrency>("USD");
+  const [promoDiscountApplied, setPromoDiscountApplied] = useState(false);
+
+  // Apply theme class to document body
+  const setTheme = (newTheme: StoreTheme) => {
+    setThemeState(newTheme);
+    if (typeof window !== "undefined") {
+      const body = document.body;
+      body.classList.remove("theme-cyber-emerald", "theme-cyber-purple", "theme-crimson-rose", "theme-amber-gold");
+      body.classList.add(`theme-${newTheme}`);
+    }
+  };
+
+  // Convert prices based on currency rate
+  const convertPrice = (usdPrice: number): string => {
+    const discountedPrice = promoDiscountApplied ? usdPrice * 0.8 : usdPrice; // 20% Easter egg discount
+    const rates: Record<StoreCurrency, { symbol: string; rate: number }> = {
+      USD: { symbol: "$", rate: 1.0 },
+      KES: { symbol: "KSh ", rate: 130.0 },
+      EUR: { symbol: "€", rate: 0.92 },
+      GBP: { symbol: "£", rate: 0.79 },
+    };
+    const active = rates[currency];
+    const converted = (discountedPrice * active.rate).toFixed(currency === "KES" ? 0 : 2);
+    return `${active.symbol}${converted}`;
+  };
+
+  const applyPromoDiscount = () => {
+    setPromoDiscountApplied(true);
+  };
 
   // 1. Fetch dynamic products (from Supabase if configured, otherwise fallback to localStorage)
   useEffect(() => {
@@ -100,6 +144,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     fetchCatalog();
   }, []);
 
+  // Initialize theme on mount
+  useEffect(() => {
+    setTheme("cyber-emerald");
+  }, []);
+
   // 2. Load cart from local storage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem("onlinewithmuuo_cart");
@@ -152,11 +201,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const startCheckoutSimulation = async (paymentDetails: any) => {
     setCheckoutStep("processing");
-    // Simulate API delay for Stripe validation & capture
     return new Promise<boolean>((resolve) => {
       setTimeout(() => {
         setCheckoutStep("success");
-        // Clear cart if we did a full cart checkout or purchased an item in cart
         if (!activeProductForCheckout) {
           clearCart();
         } else {
@@ -175,7 +222,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Upload dynamic product (optimistic UI update + remote Supabase upsert)
   const uploadProduct = async (newProduct: Product) => {
-    // 1. Optimistic UI update
     const updatedProducts = [...products];
     const index = updatedProducts.findIndex((p) => p.id === newProduct.id);
     if (index > -1) {
@@ -185,13 +231,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
     setProducts(updatedProducts);
 
-    // 2. Local storage backup
     const customOnly = updatedProducts.filter(
       (p) => !initialProducts.some((init) => init.id === p.id)
     );
     localStorage.setItem("onlinewithmuuo_uploaded_products", JSON.stringify(customOnly));
 
-    // 3. Remote Sync
     if (isSupabaseConfigured) {
       try {
         const dbReady = mapModelToDbProduct(newProduct);
@@ -209,17 +253,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Delete product (optimistic UI update + remote Supabase deletion)
   const deleteProduct = async (productId: string) => {
-    // 1. Optimistic UI update
     const updatedProducts = products.filter((p) => p.id !== productId);
     setProducts(updatedProducts);
 
-    // 2. Local storage backup
     const customOnly = updatedProducts.filter(
       (p) => !initialProducts.some((init) => init.id === p.id)
     );
     localStorage.setItem("onlinewithmuuo_uploaded_products", JSON.stringify(customOnly));
 
-    // 3. Remote Sync
     if (isSupabaseConfigured) {
       try {
         const { error } = await supabase
@@ -253,6 +294,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         products,
         uploadProduct,
         deleteProduct,
+        theme,
+        setTheme,
+        currency,
+        setCurrency,
+        convertPrice,
+        promoDiscountApplied,
+        applyPromoDiscount,
       }}
     >
       {children}

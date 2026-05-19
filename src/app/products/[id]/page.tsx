@@ -29,7 +29,7 @@ const getCoverGradientClass = (coverImage: string) => {
 export default function ProductDetailPage({ params }: PageProps) {
   const router = useRouter();
   const { id } = use(params);
-  const { products, addToCart, isInCart, openCheckout } = useStore();
+  const { products, addToCart, isInCart, openCheckout, convertPrice } = useStore();
 
   const product = products.find((p) => p.id === id);
 
@@ -241,7 +241,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           <div className="animate-right-col-item pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center gap-6">
             <div className="text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-slate-500">Retail Price</span>
-              <p className="text-4xl font-black text-emerald-400">${product.price}</p>
+              <p className="text-4xl font-black text-emerald-400">{convertPrice(product.price)}</p>
             </div>
 
             <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">

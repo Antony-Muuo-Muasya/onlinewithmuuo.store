@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star, ArrowRight, FileText, Sparkles } from "lucide-react";
 
+import { useStore } from "@/context/store-context";
+
 interface ProductCardProps {
   product: Product;
 }
@@ -23,6 +25,8 @@ const getCoverGradientClass = (coverImage: string) => {
 };
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { convertPrice } = useStore();
+
   // Generate rating stars array
   const renderStars = (rating: number) => {
     const stars = [];
@@ -79,7 +83,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Pricing Badge and Ratings */}
         <div className="flex items-center justify-between mb-3">
           <Badge variant="primary" className="text-xs py-1 px-3">
-            ${product.price}
+            {convertPrice(product.price)}
           </Badge>
           <div className="flex items-center gap-1">
             <div className="flex">{renderStars(product.rating)}</div>
