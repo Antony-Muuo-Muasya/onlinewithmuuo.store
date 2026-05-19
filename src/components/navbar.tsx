@@ -22,7 +22,6 @@ export function Navbar() {
     { name: "First $100 Guide", href: "/products/first-100-online" },
     { name: "Freelance Action Plan", href: "/products/freelance-action-plan" },
     { name: "Complete Bundle", href: "/products/complete-first-100-bundle" },
-    { name: "Admin", href: "/admin" },
   ];
 
   return (
@@ -62,6 +61,13 @@ export function Navbar() {
 
             {/* Actions */}
             <div className="flex items-center gap-4">
+              <button
+                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-slate-950 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                onClick={() => alert("Simulated OAuth / Sign In prompt: supabase auth email confirmations route successfully")}
+              >
+                Login / Sign Up
+              </button>
+
               <button
                 id="cart-trigger"
                 onClick={() => setIsCartOpen(true)}
