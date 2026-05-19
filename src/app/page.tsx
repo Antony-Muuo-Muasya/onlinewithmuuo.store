@@ -144,10 +144,10 @@ export default function Home() {
   }, { scope: containerRef });
 
   return (
-    <div ref={containerRef} className="flex flex-col min-h-screen bg-slate-950 overflow-hidden relative">
+    <div ref={containerRef} className="flex flex-col min-h-screen bg-transparent overflow-hidden relative">
       
       {/* 1. HERO SECTION (Fintech Theme) */}
-      <section className="relative pt-20 pb-24 overflow-hidden bg-slate-950">
+      <section className="relative pt-20 pb-24 overflow-hidden bg-transparent">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute top-0 right-10 w-[300px] h-[300px] bg-teal-500/5 rounded-full blur-[80px] pointer-events-none" />
 
@@ -276,7 +276,7 @@ export default function Home() {
       </section>
 
       {/* 2. CATALOG GRID SECTION (Feature 8 Integrated) */}
-      <section className="strategy-section py-20 bg-slate-950 border-t border-slate-900">
+      <section className="strategy-section py-20 bg-transparent border-t border-slate-900/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center space-y-4 mb-12">
@@ -337,7 +337,7 @@ export default function Home() {
       </section>
 
       {/* TESTIMONIALS CAROUSEL SECTION (Feature 2) */}
-      <section className="py-20 bg-slate-950 border-t border-slate-900">
+      <section className="py-20 bg-transparent border-t border-slate-900/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-3 mb-12">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/5 border border-emerald-500/10 rounded-full text-xs font-black text-theme-accent uppercase tracking-wider">
@@ -385,7 +385,7 @@ export default function Home() {
       </section>
 
       {/* FAQ SECTION WITH GSAP ACCORDIONS (Feature 4) */}
-      <section className="py-20 bg-slate-950 border-t border-slate-900">
+      <section className="py-20 bg-transparent border-t border-slate-900/60">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-3 mb-16">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/5 border border-emerald-500/10 rounded-full text-xs font-black text-theme-accent uppercase tracking-wider">
@@ -432,7 +432,7 @@ export default function Home() {
       </section>
 
       {/* 3. MENTOR PROFILE BANNER */}
-      <section className="author-section py-16 bg-gradient-to-b from-slate-950 to-slate-900 border-t border-slate-900">
+      <section className="author-section py-16 bg-transparent border-t border-slate-900/60">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="author-banner glass-panel border-slate-800 rounded-3xl p-8 sm:p-12 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl" />
