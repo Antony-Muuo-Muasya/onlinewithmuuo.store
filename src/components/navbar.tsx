@@ -40,8 +40,6 @@ export function Navbar() {
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "First $100 Guide", href: "/products/first-100-online" },
-    { name: "Freelance Action Plan", href: "/products/freelance-action-plan" },
-    { name: "Complete Bundle", href: "/products/complete-first-100-bundle" },
   ];
 
   const handleDecrypt = (e: React.FormEvent) => {
