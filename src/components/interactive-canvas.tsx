@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useStore } from "@/context/store-context";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ShoppingBag, BookOpen } from "lucide-react";
 
 interface Particle {
   x: number;
@@ -14,6 +13,18 @@ interface Particle {
   color: string;
   alpha: number;
   decay: number;
+}
+
+interface BgParticle {
+  x: number;
+  y: number;
+  size: number;
+  speedY: number;
+  speedX: number;
+  alpha: number;
+  maxAlpha: number;
+  pulseSpeed: number;
+  pulseDir: number;
 }
 
 const ACTIVITIES = [
@@ -30,7 +41,7 @@ export function InteractiveCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [toast, setToast] = useState<{ text: string; icon: string } | null>(null);
 
-  // 1. NEON MOUSE-TRAIL EFFECT
+  // 1. NEON MOUSE-TRAIL & DRIFTING BACKGROUND STARFIELD EFFECT
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -39,15 +50,8 @@ export function InteractiveCanvas() {
 
     let animationId: number;
     let particles: Particle[] = [];
+    let bgParticles: BgParticle[] = [];
     const mouse = { x: 0, y: 0, active: false };
-
-    // Set canvas dimensions
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
 
     // Get RGB string based on active theme
     const getAccentRGB = () => {
@@ -59,13 +63,42 @@ export function InteractiveCanvas() {
       return "16, 185, 129";
     };
 
+    // Initialize background floating starfield
+    const initBgParticles = () => {
+      bgParticles = [];
+      const count = 45;
+      for (let i = 0; i < count; i++) {
+        const maxAlpha = Math.random() * 0.45 + 0.15;
+        bgParticles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 3 + 1,
+          speedY: -(Math.random() * 0.25 + 0.08), // slow upward drift
+          speedX: (Math.random() - 0.5) * 0.12,  // subtle side-to-side sway
+          alpha: Math.random() * maxAlpha,
+          maxAlpha,
+          pulseSpeed: Math.random() * 0.008 + 0.003,
+          pulseDir: Math.random() > 0.5 ? 1 : -1
+        });
+      }
+    };
+
+    // Set canvas dimensions
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initBgParticles();
+    };
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
     // Track mouse coordinates
     const handleMouseMove = (e: MouseEvent) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
       mouse.active = true;
 
-      // Spawn particles
+      // Spawn temporary cursor trail particles
       const rgb = getAccentRGB();
       for (let i = 0; i < 2; i++) {
         particles.push({
@@ -91,7 +124,68 @@ export function InteractiveCanvas() {
     // Canvas animation loop
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const rgb = getAccentRGB();
 
+      // A. DRAW DRIFTING NEON BACKGROUND PARTICLES
+      for (let j = 0; j < bgParticles.length; j++) {
+        const bp = bgParticles[j];
+
+        // Slowly move background particle upward
+        bp.y += bp.speedY;
+        bp.x += bp.speedX;
+
+        // Pulse the opacity slowly
+        bp.alpha += bp.pulseSpeed * bp.pulseDir;
+        if (bp.alpha >= bp.maxAlpha) {
+          bp.alpha = bp.maxAlpha;
+          bp.pulseDir = -1;
+        } else if (bp.alpha <= 0.05) {
+          bp.alpha = 0.05;
+          bp.pulseDir = 1;
+        }
+
+        // Recycle if floated off the top edge
+        if (bp.y < -10) {
+          bp.y = canvas.height + 10;
+          bp.x = Math.random() * canvas.width;
+        }
+        // Keep in horizontal bounds
+        if (bp.x < -10) bp.x = canvas.width + 10;
+        if (bp.x > canvas.width + 10) bp.x = -10;
+
+        // Check proximity to active mouse
+        let proximityScale = 1;
+        if (mouse.active) {
+          const dx = bp.x - mouse.x;
+          const dy = bp.y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            // Glow brighter and expand slightly when cursor is near
+            proximityScale = (120 - dist) / 60 + 1; // max scale 3x
+          }
+        }
+
+        // Draw background dust
+        ctx.save();
+        ctx.globalAlpha = bp.alpha;
+        ctx.beginPath();
+        ctx.arc(bp.x, bp.y, bp.size * proximityScale, 0, Math.PI * 2);
+
+        // Ambient radial neon glow
+        const radial = ctx.createRadialGradient(
+          bp.x, bp.y, 0,
+          bp.x, bp.y, bp.size * 3 * proximityScale
+        );
+        radial.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+        radial.addColorStop(0.2, `rgba(${rgb}, 0.75)`);
+        radial.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+        ctx.fillStyle = radial;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // B. DRAW TRANSIENT CURSOR TRAIL PARTICLES
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.x += p.speedX;
@@ -104,13 +198,11 @@ export function InteractiveCanvas() {
           continue;
         }
 
-        // Draw glowing circles
         ctx.save();
         ctx.globalAlpha = p.alpha;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         
-        // Dynamic Neon Glow Radial Gradient
         const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
         gradient.addColorStop(0, "rgba(255, 255, 255, 0.9)");
         gradient.addColorStop(0.3, p.color);
@@ -159,11 +251,11 @@ export function InteractiveCanvas() {
 
   return (
     <>
-      {/* Background Interactive mouse-trail layer */}
+      {/* Background Interactive animated particles layer (positioned deep in the backdrop) */}
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 pointer-events-none z-30"
-        style={{ opacity: 0.8 }}
+        className="fixed inset-0 pointer-events-none z-[-10]"
+        style={{ opacity: 0.95 }}
       />
 
       {/* Floating Alert Ticker Toast */}

@@ -27,9 +27,23 @@ body.theme-amber-gold {
   --accent-color: 245, 158, 11; /* amber-500 */
 }
 
+@keyframes gradientBg {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  background-color: #030712; /* slate-950 */
+  background: linear-gradient(-45deg, #020617, #0f172a, #030712, #090d16);
+  background-size: 400% 400%;
+  animation: gradientBg 25s ease infinite;
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--accent-color), 0.3) #030712;
