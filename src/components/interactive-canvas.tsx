@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useStore } from "@/context/store-context";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface Particle {
+interface TrailParticle {
   x: number;
   y: number;
   size: number;
@@ -15,14 +15,13 @@ interface Particle {
   decay: number;
 }
 
-interface BgParticle {
+interface WebNode {
   x: number;
   y: number;
-  size: number;
-  speedY: number;
-  speedX: number;
+  vx: number;
+  vy: number;
+  radius: number;
   alpha: number;
-  maxAlpha: number;
   pulseSpeed: number;
   pulseDir: number;
 }
@@ -41,7 +40,7 @@ export function InteractiveCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [toast, setToast] = useState<{ text: string; icon: string } | null>(null);
 
-  // 1. NEON MOUSE-TRAIL & DRIFTING BACKGROUND STARFIELD EFFECT
+  // KINETIC CYBERNETIC VECTOR WEB & MOUSE TRAIL
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -49,8 +48,8 @@ export function InteractiveCanvas() {
     if (!ctx) return;
 
     let animationId: number;
-    let particles: Particle[] = [];
-    let bgParticles: BgParticle[] = [];
+    let trailParticles: TrailParticle[] = [];
+    let webNodes: WebNode[] = [];
     const mouse = { x: 0, y: 0, active: false };
 
     // Get RGB string based on active theme
@@ -63,48 +62,47 @@ export function InteractiveCanvas() {
       return "16, 185, 129";
     };
 
-    // Initialize background floating starfield
-    const initBgParticles = () => {
-      bgParticles = [];
-      const count = 45;
-      for (let i = 0; i < count; i++) {
-        const maxAlpha = Math.random() * 0.45 + 0.15;
-        bgParticles.push({
+    // Initialize the vector grid nodes
+    const initWebNodes = () => {
+      webNodes = [];
+      // Adjust count based on screen width for performance optimization
+      const nodeCount = window.innerWidth < 768 ? 35 : 70;
+      for (let i = 0; i < nodeCount; i++) {
+        webNodes.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() * 3 + 1,
-          speedY: -(Math.random() * 0.25 + 0.08), // slow upward drift
-          speedX: (Math.random() - 0.5) * 0.12,  // subtle side-to-side sway
-          alpha: Math.random() * maxAlpha,
-          maxAlpha,
-          pulseSpeed: Math.random() * 0.008 + 0.003,
+          vx: (Math.random() - 0.5) * 0.35, // slowly drifting
+          vy: (Math.random() - 0.5) * 0.35,
+          radius: Math.random() * 2.5 + 1.5,
+          alpha: Math.random() * 0.5 + 0.2,
+          pulseSpeed: Math.random() * 0.005 + 0.002,
           pulseDir: Math.random() > 0.5 ? 1 : -1
         });
       }
     };
 
-    // Set canvas dimensions
+    // Resize canvas viewport and re-init nodes
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      initBgParticles();
+      initWebNodes();
     };
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Track mouse coordinates
+    // Track mouse coordinate pushes
     const handleMouseMove = (e: MouseEvent) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
       mouse.active = true;
 
-      // Spawn temporary cursor trail particles
+      // Spawn temporary fast cursor trail glowing particles
       const rgb = getAccentRGB();
       for (let i = 0; i < 2; i++) {
-        particles.push({
+        trailParticles.push({
           x: mouse.x,
           y: mouse.y,
-          size: Math.random() * 8 + 3,
+          size: Math.random() * 6 + 2.5,
           speedX: (Math.random() - 0.5) * 1.5,
           speedY: (Math.random() - 0.5) * 1.5,
           color: `rgba(${rgb}, ${Math.random() * 0.4 + 0.4})`,
@@ -121,79 +119,92 @@ export function InteractiveCanvas() {
     window.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseleave", handleMouseLeave);
 
-    // Canvas animation loop
+    // Core high-performance vector rendering loop
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const rgb = getAccentRGB();
 
-      // A. DRAW DRIFTING NEON BACKGROUND PARTICLES
-      for (let j = 0; j < bgParticles.length; j++) {
-        const bp = bgParticles[j];
+      // 1. UPDATE AND DRAW CYBER VECTOR WEB NODES
+      for (let i = 0; i < webNodes.length; i++) {
+        const node = webNodes[i];
 
-        // Slowly move background particle upward
-        bp.y += bp.speedY;
-        bp.x += bp.speedX;
+        // Move nodes slowly in space
+        node.x += node.vx;
+        node.y += node.vy;
 
-        // Pulse the opacity slowly
-        bp.alpha += bp.pulseSpeed * bp.pulseDir;
-        if (bp.alpha >= bp.maxAlpha) {
-          bp.alpha = bp.maxAlpha;
-          bp.pulseDir = -1;
-        } else if (bp.alpha <= 0.05) {
-          bp.alpha = 0.05;
-          bp.pulseDir = 1;
+        // Boundary reflection collision physics
+        if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+        if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+
+        // Breathe/Pulse opacity
+        node.alpha += node.pulseSpeed * node.pulseDir;
+        if (node.alpha >= 0.8 || node.alpha <= 0.15) {
+          node.pulseDir *= -1;
         }
 
-        // Recycle if floated off the top edge
-        if (bp.y < -10) {
-          bp.y = canvas.height + 10;
-          bp.x = Math.random() * canvas.width;
-        }
-        // Keep in horizontal bounds
-        if (bp.x < -10) bp.x = canvas.width + 10;
-        if (bp.x > canvas.width + 10) bp.x = -10;
-
-        // Check proximity to active mouse
-        let proximityScale = 1;
+        // Active cursor magnetic repulsion/attraction force
         if (mouse.active) {
-          const dx = bp.x - mouse.x;
-          const dy = bp.y - mouse.y;
+          const dx = node.x - mouse.x;
+          const dy = node.y - mouse.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
-            // Glow brighter and expand slightly when cursor is near
-            proximityScale = (120 - dist) / 60 + 1; // max scale 3x
+          if (dist < 180) {
+            // Gently warp grid points away from cursor
+            const force = (180 - dist) / 180;
+            node.x += (dx / dist) * force * 1.5;
+            node.y += (dy / dist) * force * 1.5;
           }
         }
 
-        // Draw background dust
+        // Draw node vertices
         ctx.save();
-        ctx.globalAlpha = bp.alpha;
         ctx.beginPath();
-        ctx.arc(bp.x, bp.y, bp.size * proximityScale, 0, Math.PI * 2);
-
-        // Ambient radial neon glow
-        const radial = ctx.createRadialGradient(
-          bp.x, bp.y, 0,
-          bp.x, bp.y, bp.size * 3 * proximityScale
-        );
-        radial.addColorStop(0, "rgba(255, 255, 255, 0.95)");
-        radial.addColorStop(0.2, `rgba(${rgb}, 0.75)`);
-        radial.addColorStop(1, "rgba(0, 0, 0, 0)");
-
-        ctx.fillStyle = radial;
+        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${rgb}, ${node.alpha})`;
+        
+        // Add glowing drop shadows on vertices
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = `rgb(${rgb})`;
         ctx.fill();
         ctx.restore();
       }
 
-      // B. DRAW TRANSIENT CURSOR TRAIL PARTICLES
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
+      // 2. RENDER THE INTERCONNECTING VECTOR NETWORK LINKS
+      // Max distance allowed to form a vector connection line
+      const maxConnectDistance = 140;
+      for (let i = 0; i < webNodes.length; i++) {
+        for (let j = i + 1; j < webNodes.length; j++) {
+          const n1 = webNodes[i];
+          const n2 = webNodes[j];
+
+          const dx = n1.x - n2.x;
+          const dy = n1.y - n2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < maxConnectDistance) {
+            // Calculate opacity proportional to proximity
+            const linkAlpha = (1 - dist / maxConnectDistance) * 0.18 * (n1.alpha + n2.alpha) / 2;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(n1.x, n1.y);
+            ctx.lineTo(n2.x, n2.y);
+            ctx.strokeStyle = `rgba(${rgb}, ${linkAlpha})`;
+            ctx.lineWidth = (1 - dist / maxConnectDistance) * 1.2;
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+
+      // 3. DRAW TRANSIENT CURSOR TRAIL GLOWS
+      for (let i = 0; i < trailParticles.length; i++) {
+        const p = trailParticles[i];
         p.x += p.speedX;
         p.y += p.speedY;
         p.alpha -= p.decay;
 
         if (p.alpha <= 0) {
-          particles.splice(i, 1);
+          trailParticles.splice(i, 1);
           i--;
           continue;
         }
@@ -251,7 +262,7 @@ export function InteractiveCanvas() {
 
   return (
     <>
-      {/* Background Interactive animated particles layer (positioned deep in the backdrop) */}
+      {/* Background Interactive animated kinetic web layer */}
       <canvas
         ref={canvasRef}
         className="fixed inset-0 pointer-events-none z-[-10]"
